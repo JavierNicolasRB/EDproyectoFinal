@@ -5,161 +5,102 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.Button;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
-/**
- * Clase Controlador que gestiona la lógica de negocio y las interacciones del usuario.
- * Escucha los botones de la interfaz gráfica y se comunica con la base de datos.
- */
 public class Controlador implements ActionListener, WindowListener {
-	private Vista vista;
-	private Modelo modelo;
+    private Vista vista;
+    private Modelo modelo;
 
-	/**
-	 * Constructor del Controlador.
-	 * Asigna los escuchadores (listeners) a los botones y a la ventana.
-	 * * @param vista  Referencia a la interfaz gráfica.
-	 * @param modelo Referencia al gestor de base de datos.
-	 */
-	public Controlador(Vista vista, Modelo modelo) {
-		this.vista = vista;
-		this.modelo = modelo;
+    public Controlador(Vista vista, Modelo modelo) {
+        this.vista = vista;
+        this.modelo = modelo;
 
-		// --- Escuchadores para los botones de navegación ---
-		this.vista.btnVerEventosMenu.addActionListener(this);
-		this.vista.btnSacarTicketMenu.addActionListener(this);
-		this.vista.btnVolver.addActionListener(this);
+        this.vista.btnVerEventosMenu.addActionListener(this);
+        this.vista.btnSacarTicketMenu.addActionListener(this);
+        this.vista.btnVolverDeFormulario.addActionListener(this);
+        this.vista.btnVolverDeEventos.addActionListener(this);
+        this.vista.btnVerEventosFormulario.addActionListener(this);
+        this.vista.btnComprar.addActionListener(this);
+        this.vista.ventana.addWindowListener(this);
+    }
 
-		// Escuchadores originales
-		this.vista.btnVerEventos.addActionListener(this);
-		this.vista.btnComprar.addActionListener(this);
-		this.vista.ventana.addWindowListener(this);
-	}
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String botonPulsado = ((Button) e.getSource()).getLabel();
 
-	/**
-	 * Define las acciones a ejecutar dependiendo del botón que el usuario haya pulsado.
-	 * Gestiona tanto la navegación entre paneles como las inserciones en base de datos.
-	 * * @param e Evento capturado al pulsar un botón.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		String botonPulsado = ((Button) e.getSource()).getLabel();
+        if (botonPulsado.equals("Ver Eventos")) {
+            vista.mostrarPanelEventos();
+            cargarYMostrarEventos();
+        } 
+        else if (botonPulsado.equals("Sacar Ticket")) {
+            vista.mostrarPanelFormulario();
+        } 
+        else if (botonPulsado.equals("Volver al Menú")) {
+            vista.mostrarPanelMenu();
+        }
+        else if (botonPulsado.equals("Ver Eventos Disponibles")) {
+            cargarYMostrarEventos();
+        } 
+        else if (botonPulsado.equals("Comprar")) {
+            procesarCompra();
+        }
+    }
 
-		// --- GESTIÓN DE NAVEGACIÓN ---
-		if (botonPulsado.equals("Ver Eventos")) {
-			vista.ventana.remove(vista.panelMenu);
-			vista.ventana.remove(vista.panelFormulario);
-			vista.panelEventos.add(vista.areaTexto, java.awt.BorderLayout.CENTER); 
-			vista.ventana.add(vista.panelEventos, java.awt.BorderLayout.CENTER);
-			
-			vista.ventana.validate();
-			vista.ventana.repaint();
-			
-			cargarEventos();
-		} 
-		else if (botonPulsado.equals("Sacar Ticket")) {
-			vista.areaTexto.setText(""); 
-			
-			vista.ventana.remove(vista.panelMenu);
-			vista.ventana.remove(vista.panelEventos);
-			vista.ventana.add(vista.areaTexto, java.awt.BorderLayout.SOUTH); 
-			vista.ventana.add(vista.panelFormulario, java.awt.BorderLayout.CENTER);
-			
-			vista.ventana.validate();
-			vista.ventana.repaint();
-		} 
-		else if (botonPulsado.equals("Volver al Menú")) {
-			vista.areaTexto.setText("");
-			
-			vista.ventana.remove(vista.panelFormulario);
-			vista.ventana.remove(vista.panelEventos);
-			vista.ventana.add(vista.areaTexto, java.awt.BorderLayout.SOUTH);
-			vista.ventana.add(vista.panelMenu, java.awt.BorderLayout.CENTER);
-			
-			vista.ventana.validate();
-			vista.ventana.repaint();
-		}
+    private void cargarYMostrarEventos() {
+        String eventos = modelo.obtenerEventosDisponibles();
+        String tipos = modelo.obtenerTiposDisponibles();
+        vista.mostrarMensaje(eventos + "\n" + tipos);
+    }
 
-		// --- GESTIÓN DE COMPRAS Y EVENTOS ---
-		else if (botonPulsado.equals("Ver Eventos Disponibles")) {
-			cargarEventos();
-		} 
-		else if (botonPulsado.equals("Confirmar y Comprar Ticket")) {
-			try {
-				String nombre = vista.txtNombre.getText();
-				String dniEmail = vista.txtDni.getText();
-				int idEvento = Integer.parseInt(vista.txtEvento.getText());
-				int idTipo = Integer.parseInt(vista.txtTipo.getText());
-				int cantidad = Integer.parseInt(vista.txtCantidad.getText());
+    private void procesarCompra() {
+        try {
+            String nombre = vista.getNombre();
+            String dniEmail = vista.getDni();
+            int idEvento = Integer.parseInt(vista.getEvento());
+            int idTipo = Integer.parseInt(vista.getTipo());
+            int cantidad = Integer.parseInt(vista.getCantidad());
 
-				double precioBase = (idTipo == 1) ? 25.00 : 60.00;
-				double total = cantidad * precioBase;
+            // --- CAMBIADO: Recibimos todos los datos del tipo de entrada ---
+            String[] datosTipo = modelo.obtenerDatosTipo(idTipo);
+            double precioBase = Double.parseDouble(datosTipo[0]);
+            String nombreTipo = datosTipo[1];
+            String descTipo = datosTipo[2];
+            
+            double total = cantidad * precioBase;
 
-				Connection conn = modelo.obtenerConexion();
-				String sqlInsert = "INSERT INTO ventas (nombreClienteVenta, dniEmailClienteVenta, cantidadTicketsVenta, totalPagadoVenta, idEventoFK, idTipoFK) " 
-				+ "VALUES ('" + nombre + "', '" + dniEmail + "', " + cantidad + ", " + total + ", " + idEvento + ", " + idTipo + ")";
+            // --- CAMBIADO: Añadimos la descripción al resumen ---
+            String resumenCompra = "  --- RESUMEN DE SU ORDEN ---\n\n" +
+                                   " Cliente: " + nombre + "\n" +
+                                   " DNI / Email: " + dniEmail + "\n" +
+                                   " ID Evento: " + idEvento + "\n" +
+                                   " Tipo: " + nombreTipo + " (" + descTipo + ")\n" +
+                                   " Cantidad: " + cantidad + " ticket(s)\n" +
+                                   " Precio Unitario: " + precioBase + " €\n" +
+                                   "-------------------------------------------\n" +
+                                   " TOTAL A PAGAR: " + total + " €\n\n" +
+                                   " ¿Desea confirmar el pago?";
 
-				PreparedStatement stmt = conn.prepareStatement(sqlInsert);
-				stmt.executeUpdate();
-				stmt.close();
-				conn.close();
+            boolean veredictoUsuario = vista.mostrarDialogoConfirmacion(resumenCompra);
 
-				vista.areaTexto.setText("¡COMPRA CORRECTA!\n\n" + "Cliente: " + nombre + "\n" + "Entradas: " + cantidad + "\n" + "Total Cargado: " + total + "€");
+            if (veredictoUsuario) {
+                modelo.registrarVenta(nombre, dniEmail, cantidad, total, idEvento, idTipo);
+                vista.mostrarMensaje("¡COMPRA CORRECTA!\n\nSe ha guardado el ticket de " + nombre + " por un total de " + total + "€.");
+                vista.limpiarFormulario();
+            } else {
+                vista.mostrarMensaje("Operación cancelada. No se ha realizado ningún cargo.");
+            }
 
-				vista.txtNombre.setText("");
-				vista.txtDni.setText("");
-				vista.txtEvento.setText("");
-				vista.txtTipo.setText("");
-				vista.txtCantidad.setText("");
+        } catch (NumberFormatException ex) {
+            vista.mostrarMensaje("Error: Por favor, introduce números válidos en ID Evento, Tipo y Cantidad.");
+        } catch (Exception ex) {
+            vista.mostrarMensaje("Error en la operación: " + ex.getMessage());
+        }
+    }
 
-			} catch (Exception ex) {
-				vista.areaTexto.setText("Error en los datos introducidos: " + ex.getMessage());
-			}
-		}
-	}
-
-	/**
-	 * Método auxiliar que ejecuta una consulta SELECT a la base de datos 
-	 * para extraer los eventos disponibles y mostrarlos en el área de texto.
-	 */
-	private void cargarEventos() {
-		try {
-			Connection conn = modelo.obtenerConexion();
-			String sql = "SELECT * FROM eventos";
-			PreparedStatement stmt = conn.prepareStatement(sql);
-			ResultSet rs = stmt.executeQuery();
-
-			String resultadoText = "--- EVENTOS DISPONIBLES ---\n";
-			while (rs.next()) {
-				resultadoText += "ID: " + rs.getInt("idEvento") + " - " + rs.getString("nombreEvento") + "\n";
-				resultadoText += "Cartel: " + rs.getString("cartelEvento") + "\n\n";
-			}
-
-			vista.areaTexto.setText(resultadoText);
-
-			rs.close();
-			stmt.close();
-			conn.close();
-		} catch (Exception ex) {
-			vista.areaTexto.setText("Error al cargar eventos: " + ex.getMessage());
-		}
-	}
-
-	// --- MÉTODOS DE WINDOWLISTENER ---
-	
-	/**
-	 * Cierra la aplicación cuando el usuario pulsa la "X" de la ventana.
-	 */
-	public void windowClosing(WindowEvent e) {
-		System.exit(0);
-	}
-
-	public void windowOpened(WindowEvent e) {}
-	public void windowClosed(WindowEvent e) {}
-	public void windowIconified(WindowEvent e) {}
-	public void windowDeiconified(WindowEvent e) {}
-	public void windowActivated(WindowEvent e) {}
-	public void windowDeactivated(WindowEvent e) {}
+    public void windowClosing(WindowEvent e) { System.exit(0); }
+    public void windowOpened(WindowEvent e) {}
+    public void windowClosed(WindowEvent e) {}
+    public void windowIconified(WindowEvent e) {}
+    public void windowDeiconified(WindowEvent e) {}
+    public void windowActivated(WindowEvent e) {}
+    public void windowDeactivated(WindowEvent e) {}
 }

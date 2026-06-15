@@ -2,91 +2,167 @@ package finalproyecto;
 
 import java.awt.*;
 
-/**
- * Clase Vista que contiene todos los componentes gráficos (AWT) de la aplicación.
- * Define la estructura de las diferentes pantallas (Menú, Eventos, Formulario).
- */
 public class Vista {
-	Frame ventana = new Frame("Taquilla Plaza de Toros");
+    Frame ventana = new Frame("Taquilla Plaza de Toros");
 
-	// --- NUEVO: Botones exclusivos para la primera página (Menú) y navegación ---
-	Button btnVerEventosMenu = new Button("Ver Eventos");
-	Button btnSacarTicketMenu = new Button("Sacar Ticket");
-	Button btnVolver = new Button("Volver al Menú"); 
+    Button btnVerEventosMenu = new Button("Ver Eventos");
+    Button btnSacarTicketMenu = new Button("Sacar Ticket");
+    
+    Button btnVolverDeFormulario = new Button("Volver al Menú"); 
+    Button btnVolverDeEventos = new Button("Volver al Menú"); 
 
-	// --- TUS COMPONENTES ORIGINALES ---
-	Button btnVerEventos = new Button("Ver Eventos Disponibles");
-	Button btnComprar = new Button("Confirmar y Comprar Ticket");
+    Button btnVerEventosFormulario = new Button("Ver Eventos Disponibles");
+    
+    // --- CAMBIADO: Ahora el botón solo dice "Comprar" ---
+    Button btnComprar = new Button("Comprar");
 
-	Label lblNombre = new Label("Nombre Cliente:");
-	TextField txtNombre = new TextField(20);
+    TextField txtNombre = new TextField(20);
+    TextField txtDni = new TextField(20);
+    TextField txtEvento = new TextField(5);
+    TextField txtTipo = new TextField(5);
+    TextField txtCantidad = new TextField(5);
+    TextArea areaTexto = new TextArea(10, 40);
 
-	Label lblDni = new Label("DNI / Email:");
-	TextField txtDni = new TextField(20);
+    Panel panelMenu = new Panel();
+    Panel panelFormulario = new Panel();
+    Panel panelEventos = new Panel();
 
-	Label lblEvento = new Label("ID Evento (1 - 6):");
-	TextField txtEvento = new TextField(5);
+    public Vista() {
+        ventana.setLayout(new BorderLayout());
 
-	Label lblTipo = new Label("Tipo Entrada (1=Sol, 2=Sombra):");
-	TextField txtTipo = new TextField(5);
+        panelMenu.setLayout(new GridLayout(2, 1, 10, 10));
+        panelMenu.add(btnVerEventosMenu);
+        panelMenu.add(btnSacarTicketMenu);
 
-	Label lblCantidad = new Label("Cantidad:");
-	TextField txtCantidad = new TextField(5);
+        panelFormulario.setLayout(new BorderLayout());
+        Panel camposGrid = new Panel(new GridLayout(6, 2));
+        camposGrid.add(new Label("Nombre Cliente:")); camposGrid.add(txtNombre);
+        camposGrid.add(new Label("DNI / Email:")); camposGrid.add(txtDni);
+        camposGrid.add(new Label("ID Evento:")); camposGrid.add(txtEvento);
+        camposGrid.add(new Label("ID Tipo Entrada:")); camposGrid.add(txtTipo);
+        camposGrid.add(new Label("Cantidad:")); camposGrid.add(txtCantidad);
+        camposGrid.add(btnVolverDeFormulario); 
+        camposGrid.add(btnComprar); 
+        
+        panelFormulario.add(btnVerEventosFormulario, BorderLayout.NORTH);
+        panelFormulario.add(camposGrid, BorderLayout.CENTER);
 
-	TextArea areaTexto = new TextArea(10, 40);
+        panelEventos.setLayout(new BorderLayout());
+        panelEventos.add(btnVolverDeEventos, BorderLayout.SOUTH);
 
-	// Paneles independientes para simular el cambio de pantallas
-	Panel panelMenu = new Panel();
-	Panel panelFormulario = new Panel();
-	Panel panelEventos = new Panel();
+        areaTexto.setEditable(false);
+        ventana.add(areaTexto, BorderLayout.SOUTH);
+        mostrarPanelMenu();
 
-	/**
-	 * Constructor de la Vista.
-	 * Inicializa y configura la posición de los botones, paneles, y campos de texto
-	 * en la ventana principal.
-	 */
-	public Vista() {
-		ventana.setLayout(new BorderLayout());
+        ventana.setSize(400, 450);
+        ventana.setResizable(false);
+        ventana.setLocationRelativeTo(null);
+        ventana.setVisible(true);
+    }
 
-		// 1. Configuración de la Primera Página (Menú)
-		panelMenu.setLayout(new GridLayout(2, 1, 10, 10));
-		panelMenu.add(btnVerEventosMenu);
-		panelMenu.add(btnSacarTicketMenu);
+    // --- NUEVO MÉTODO: Muestra una ventana emergente (Dialog) de confirmación ---
+    public boolean mostrarDialogoConfirmacion(String datosResumen) {
+        // Creamos un diálogo modal (el 'true' hace que bloquee la pantalla de atrás)
+        final Dialog dialogo = new Dialog(ventana, "Confirmar Compra", true);
+        dialogo.setLayout(new BorderLayout());
+        
+        // Área de texto interna para mostrar los datos que se van a pagar
+        TextArea txtResumen = new TextArea(datosResumen, 8, 35, TextArea.SCROLLBARS_NONE);
+        txtResumen.setEditable(false);
+        dialogo.add(txtResumen, BorderLayout.CENTER);
+        
+        // Panel inferior para los botones de Confirmar y Cancelar
+        Panel panelBotones = new Panel();
+        Button btnConfirmar = new Button("Confirmar");
+        Button btnCancelar = new Button("Cancelar");
+        panelBotones.add(btnConfirmar);
+        panelBotones.add(btnCancelar);
+        dialogo.add(panelBotones, BorderLayout.SOUTH);
+        
+        // Variable para guardar la elección del usuario
+        final boolean[] resultadoConfirmacion = {false};
+        
+        // Acción al pulsar Confirmar
+        btnConfirmar.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                resultadoConfirmacion[0] = true;
+                dialogo.setVisible(false);
+                dialogo.dispose(); // Destruye la ventana emergente
+            }
+        });
+        
+        // Acción al pulsar Cancelar
+        btnCancelar.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                resultadoConfirmacion[0] = false;
+                dialogo.setVisible(false);
+                dialogo.dispose();
+            }
+        });
+        
+        // Acción por si cierran la ventana desde la "X" del diálogo
+        dialogo.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                resultadoConfirmacion[0] = false;
+                dialogo.setVisible(false);
+                dialogo.dispose();
+            }
+        });
+        
+        dialogo.setSize(380, 280);
+        dialogo.setLocationRelativeTo(ventana); // Centrado respecto a la app principal
+        dialogo.setVisible(true); // Aquí el programa se "detiene" hasta que el diálogo se cierre
+        
+        return resultadoConfirmacion[0];
+    }
 
-		// 2. Configuración de Sacar Tickets (Tu diseño con el botón arriba)
-		panelFormulario.setLayout(new BorderLayout());
-		
-		Panel camposGrid = new Panel(new GridLayout(6, 2));
-		camposGrid.add(lblNombre);
-		camposGrid.add(txtNombre);
-		camposGrid.add(lblDni);
-		camposGrid.add(txtDni);
-		camposGrid.add(lblEvento);
-		camposGrid.add(txtEvento);
-		camposGrid.add(lblTipo);
-		camposGrid.add(txtTipo);
-		camposGrid.add(lblCantidad);
-		camposGrid.add(txtCantidad);
-		camposGrid.add(btnVolver); // Botón para regresar al menú principal
-		camposGrid.add(btnComprar); // Tu botón original de registrar la compra
-		
-		panelFormulario.add(btnVerEventos, BorderLayout.NORTH); // Tu botón original de consultar arriba
-		panelFormulario.add(camposGrid, BorderLayout.CENTER);
+    // --- MÉTODOS DE NAVEGACIÓN VISUAL ---
+    public void mostrarPanelMenu() {
+        ventana.removeAll();
+        ventana.add(panelMenu, BorderLayout.CENTER);
+        ventana.add(areaTexto, BorderLayout.SOUTH);
+        areaTexto.setText("");
+        refrescarVentana();
+    }
 
-		// 3. Configuración de Ver Eventos (Solo muestra la lista limpia)
-		panelEventos.setLayout(new BorderLayout());
-		panelEventos.add(btnVolver, BorderLayout.SOUTH);
+    public void mostrarPanelEventos() {
+        ventana.removeAll();
+        panelEventos.add(areaTexto, BorderLayout.CENTER);
+        ventana.add(panelEventos, BorderLayout.CENTER);
+        refrescarVentana();
+    }
 
-		// Estado por defecto: Añadimos el menú inicial en el centro
-		ventana.add(panelMenu, BorderLayout.CENTER);
+    public void mostrarPanelFormulario() {
+        ventana.removeAll();
+        ventana.add(panelFormulario, BorderLayout.CENTER);
+        ventana.add(areaTexto, BorderLayout.SOUTH);
+        areaTexto.setText("");
+        refrescarVentana();
+    }
 
-		// Tu área de texto original fija abajo del todo
-		areaTexto.setEditable(false);
-		ventana.add(areaTexto, BorderLayout.SOUTH);
+    private void refrescarVentana() {
+        ventana.validate();
+        ventana.repaint();
+    }
 
-		ventana.setSize(400, 450);
-		ventana.setResizable(false);
-		ventana.setLocationRelativeTo(null);
-		ventana.setVisible(true);
-	}
+    public String getNombre() { return txtNombre.getText(); }
+    public String getDni() { return txtDni.getText(); }
+    public String getEvento() { return txtEvento.getText(); }
+    public String getTipo() { return txtTipo.getText(); }
+    public String getCantidad() { return txtCantidad.getText(); }
+
+    public void mostrarMensaje(String mensaje) {
+        areaTexto.setText(mensaje);
+    }
+
+    public void limpiarFormulario() {
+        txtNombre.setText("");
+        txtDni.setText("");
+        txtEvento.setText("");
+        txtTipo.setText("");
+        txtCantidad.setText("");
+    }
 }
