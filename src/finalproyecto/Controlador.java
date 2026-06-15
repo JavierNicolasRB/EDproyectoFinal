@@ -2,11 +2,12 @@ package finalproyecto;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.Button;
 
-public class Controlador implements ActionListener, WindowListener {
+// Ya no implementamos WindowListener, usamos un Adapter para evitar métodos vacíos.
+public class Controlador implements ActionListener {
     private Vista vista;
     private Modelo modelo;
 
@@ -14,34 +15,46 @@ public class Controlador implements ActionListener, WindowListener {
         this.vista = vista;
         this.modelo = modelo;
 
+        // Registro de eventos para los botones
         this.vista.btnVerEventosMenu.addActionListener(this);
         this.vista.btnSacarTicketMenu.addActionListener(this);
         this.vista.btnVolverDeFormulario.addActionListener(this);
         this.vista.btnVolverDeEventos.addActionListener(this);
         this.vista.btnVerEventosFormulario.addActionListener(this);
         this.vista.btnComprar.addActionListener(this);
-        this.vista.ventana.addWindowListener(this);
+        
+        // Cierra la aplicación de forma limpia al pulsar la 'X'
+        this.vista.ventana.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
+        });
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         String botonPulsado = ((Button) e.getSource()).getLabel();
 
-        if (botonPulsado.equals("Ver Eventos")) {
-            vista.mostrarPanelEventos();
-            cargarYMostrarEventos();
-        } 
-        else if (botonPulsado.equals("Sacar Ticket")) {
-            vista.mostrarPanelFormulario();
-        } 
-        else if (botonPulsado.equals("Volver al Menú")) {
-            vista.mostrarPanelMenu();
-        }
-        else if (botonPulsado.equals("Ver Eventos Disponibles")) {
-            cargarYMostrarEventos();
-        } 
-        else if (botonPulsado.equals("Comprar")) {
-            procesarCompra();
+        // El uso de 'switch' hace el código de control mucho más limpio que los if-else
+        switch (botonPulsado) {
+            case "Ver Eventos":
+            case "Ver Eventos Disponibles":
+                vista.mostrarPanelEventos();
+                cargarYMostrarEventos();
+                break;
+                
+            case "Sacar Ticket":
+                vista.mostrarPanelFormulario();
+                break;
+                
+            case "Volver al Menú":
+                vista.mostrarPanelMenu();
+                break;
+                
+            case "Comprar":
+                procesarCompra();
+                break;
         }
     }
 
@@ -59,7 +72,7 @@ public class Controlador implements ActionListener, WindowListener {
             int idTipo = Integer.parseInt(vista.getTipo());
             int cantidad = Integer.parseInt(vista.getCantidad());
 
-            // --- CAMBIADO: Recibimos todos los datos del tipo de entrada ---
+            // 1. Extraemos los datos cruzados de la BD
             String[] datosTipo = modelo.obtenerDatosTipo(idTipo);
             double precioBase = Double.parseDouble(datosTipo[0]);
             String nombreTipo = datosTipo[1];
@@ -67,7 +80,7 @@ public class Controlador implements ActionListener, WindowListener {
             
             double total = cantidad * precioBase;
 
-            // --- CAMBIADO: Añadimos la descripción al resumen ---
+            // 2. Preparamos el recibo para validación
             String resumenCompra = "  --- RESUMEN DE SU ORDEN ---\n\n" +
                                    " Cliente: " + nombre + "\n" +
                                    " DNI / Email: " + dniEmail + "\n" +
@@ -79,6 +92,7 @@ public class Controlador implements ActionListener, WindowListener {
                                    " TOTAL A PAGAR: " + total + " €\n\n" +
                                    " ¿Desea confirmar el pago?";
 
+            // 3. Mostramos ventana bloqueante y esperamos respuesta
             boolean veredictoUsuario = vista.mostrarDialogoConfirmacion(resumenCompra);
 
             if (veredictoUsuario) {
@@ -95,12 +109,4 @@ public class Controlador implements ActionListener, WindowListener {
             vista.mostrarMensaje("Error en la operación: " + ex.getMessage());
         }
     }
-
-    public void windowClosing(WindowEvent e) { System.exit(0); }
-    public void windowOpened(WindowEvent e) {}
-    public void windowClosed(WindowEvent e) {}
-    public void windowIconified(WindowEvent e) {}
-    public void windowDeiconified(WindowEvent e) {}
-    public void windowActivated(WindowEvent e) {}
-    public void windowDeactivated(WindowEvent e) {}
 }

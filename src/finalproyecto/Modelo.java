@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class Modelo {
+    // Credenciales de conexión a la base de datos
     private final String URL = "jdbc:mysql://localhost:3306/PracticaEntornos";
     private final String USER = "root";
     private final String PASSWORD = "1234"; 
@@ -47,7 +48,6 @@ public class Modelo {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                // --- CAMBIADO: Ahora incluimos la descripción en la lista ---
                 resultado.append("ID Tipo: ").append(rs.getInt("idTipo"))
                          .append(" - ").append(rs.getString("nombreTipo"))
                          .append(" (").append(rs.getDouble("precioTipo")).append("€)\n")
@@ -59,7 +59,7 @@ public class Modelo {
         }
     }
 
-    // --- CAMBIADO: Ahora extraemos precio, nombre y descripción a la vez ---
+    // Devuelve un array con [0]=precio, [1]=nombre, [2]=descripción del tipo de entrada
     public String[] obtenerDatosTipo(int idTipo) throws Exception {
         String sql = "SELECT precioTipo, nombreTipo, descripcionTipo FROM tipos WHERE idTipo = ?";
         
@@ -69,7 +69,6 @@ public class Modelo {
             stmt.setInt(1, idTipo);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    // Devolvemos un array con [0]=precio, [1]=nombre, [2]=descripcion
                     return new String[] {
                         String.valueOf(rs.getDouble("precioTipo")),
                         rs.getString("nombreTipo"),
@@ -82,6 +81,7 @@ public class Modelo {
         }
     }
 
+    // Ejecuta la inserción de la venta en la base de datos
     public void registrarVenta(String nombre, String dniEmail, int cantidad, double total, int idEvento, int idTipo) throws Exception {
         String sqlInsert = "INSERT INTO ventas (nombreClienteVenta, dniEmailClienteVenta, cantidadTicketsVenta, totalPagadoVenta, idEventoFK, idTipoFK) VALUES (?, ?, ?, ?, ?, ?)";
 
