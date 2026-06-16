@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Modelo {
     // Credenciales de conexión a la base de datos
@@ -57,6 +59,42 @@ public class Modelo {
         } catch (Exception ex) {
             return "Error al cargar tipos: " + ex.getMessage();
         }
+    }
+
+    // NUEVO: Devuelve una lista con el formato "ID - Nombre del Evento"
+    public List<String> obtenerListaEventos() {
+        List<String> lista = new ArrayList<>();
+        String sql = "SELECT idEvento, nombreEvento FROM eventos";
+
+        try (Connection conn = obtenerConexion();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(rs.getInt("idEvento") + " - " + rs.getString("nombreEvento"));
+            }
+        } catch (Exception ex) {
+            System.out.println("Error al cargar lista de eventos: " + ex.getMessage());
+        }
+        return lista;
+    }
+
+    // NUEVO: Devuelve una lista con el formato "ID - Nombre del Tipo (Precio€)"
+    public List<String> obtenerListaTipos() {
+        List<String> lista = new ArrayList<>();
+        String sql = "SELECT idTipo, nombreTipo, precioTipo FROM tipos";
+
+        try (Connection conn = obtenerConexion();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(rs.getInt("idTipo") + " - " + rs.getString("nombreTipo") + " (" + rs.getDouble("precioTipo") + "€)");
+            }
+        } catch (Exception ex) {
+            System.out.println("Error al cargar lista de tipos: " + ex.getMessage());
+        }
+        return lista;
     }
 
     // Devuelve un array con [0]=precio, [1]=nombre, [2]=descripción del tipo de entrada

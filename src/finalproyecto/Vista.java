@@ -3,6 +3,7 @@ package finalproyecto;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 public class Vista {
     Frame ventana = new Frame("Taquilla Plaza de Toros");
@@ -17,11 +18,11 @@ public class Vista {
     Button btnVerEventosFormulario = new Button("Ver Eventos Disponibles");
     Button btnComprar = new Button("Comprar");
 
-    // Campos de entrada de datos
+    // Campos de entrada de datos modificados para usar Choice
     TextField txtNombre = new TextField(20);
     TextField txtDni = new TextField(20);
-    TextField txtEvento = new TextField(5);
-    TextField txtTipo = new TextField(5);
+    Choice choiceEvento = new Choice(); // NUEVO
+    Choice choiceTipo = new Choice();   // NUEVO
     TextField txtCantidad = new TextField(5);
     
     // Área de visualización de información
@@ -50,8 +51,6 @@ public class Vista {
         ventana.setVisible(true);
     }
 
-    // --- MÉTODOS DE CONFIGURACIÓN VISUAL (Para limpiar el constructor) ---
-
     private void configurarPanelMenu() {
         panelMenu.setLayout(new GridLayout(2, 1, 10, 10));
         panelMenu.add(btnVerEventosMenu);
@@ -63,8 +62,8 @@ public class Vista {
         Panel camposGrid = new Panel(new GridLayout(6, 2));
         camposGrid.add(new Label("Nombre Cliente:")); camposGrid.add(txtNombre);
         camposGrid.add(new Label("DNI / Email:")); camposGrid.add(txtDni);
-        camposGrid.add(new Label("ID Evento:")); camposGrid.add(txtEvento);
-        camposGrid.add(new Label("ID Tipo Entrada:")); camposGrid.add(txtTipo);
+        camposGrid.add(new Label("Selecciona Evento:")); camposGrid.add(choiceEvento); // NUEVO
+        camposGrid.add(new Label("Selecciona Entrada:")); camposGrid.add(choiceTipo);  // NUEVO
         camposGrid.add(new Label("Cantidad:")); camposGrid.add(txtCantidad);
         camposGrid.add(btnVolverDeFormulario); 
         camposGrid.add(btnComprar); 
@@ -77,8 +76,6 @@ public class Vista {
         panelEventos.setLayout(new BorderLayout());
         panelEventos.add(btnVolverDeEventos, BorderLayout.SOUTH);
     }
-
-    // --- MÉTODOS DE NAVEGACIÓN Y VENTANAS ---
 
     public boolean mostrarDialogoConfirmacion(String datosResumen) {
         final Dialog dialogo = new Dialog(ventana, "Confirmar Compra", true);
@@ -97,7 +94,6 @@ public class Vista {
         
         final boolean[] resultadoConfirmacion = {false};
         
-        // Uso de lambdas para hacer el código de los botones mucho más corto
         btnConfirmar.addActionListener(e -> {
             resultadoConfirmacion[0] = true;
             dialogo.dispose(); 
@@ -108,7 +104,6 @@ public class Vista {
             dialogo.dispose();
         });
         
-        // Captura el cierre de ventana desde la 'X' superior
         dialogo.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -119,7 +114,7 @@ public class Vista {
         
         dialogo.setSize(380, 280);
         dialogo.setLocationRelativeTo(ventana); 
-        dialogo.setVisible(true); // Bloquea la ejecución aquí hasta que se cierre el diálogo
+        dialogo.setVisible(true); 
         
         return resultadoConfirmacion[0];
     }
@@ -149,16 +144,32 @@ public class Vista {
 
     private void refrescarVentana() {
         ventana.validate();
-        ventana.repaint(); // Necesario en AWT para repintar tras borrar componentes
+        ventana.repaint();
     }
 
-    // --- GETTERS Y LIMPIEZA ---
+    // --- GETTERS MODIFICADOS ---
 
     public String getNombre() { return txtNombre.getText(); }
     public String getDni() { return txtDni.getText(); }
-    public String getEvento() { return txtEvento.getText(); }
-    public String getTipo() { return txtTipo.getText(); }
+    public String getEvento() { return choiceEvento.getSelectedItem(); } // Saca el texto del choice
+    public String getTipo() { return choiceTipo.getSelectedItem(); }     // Saca el texto del choice
     public String getCantidad() { return txtCantidad.getText(); }
+
+    // --- MÉTODOS PARA RELLENAR LOS CHOICE ---
+    
+    public void cargarOpcionesEvento(List<String> eventos) {
+        choiceEvento.removeAll(); 
+        for (String evento : eventos) {
+            choiceEvento.add(evento);
+        }
+    }
+
+    public void cargarOpcionesTipo(List<String> tipos) {
+        choiceTipo.removeAll(); 
+        for (String tipo : tipos) {
+            choiceTipo.add(tipo);
+        }
+    }
 
     public void mostrarMensaje(String mensaje) {
         areaTexto.setText(mensaje);
@@ -167,8 +178,9 @@ public class Vista {
     public void limpiarFormulario() {
         txtNombre.setText("");
         txtDni.setText("");
-        txtEvento.setText("");
-        txtTipo.setText("");
         txtCantidad.setText("");
+        // Devolvemos los desplegables a la primera opción
+        if (choiceEvento.getItemCount() > 0) choiceEvento.select(0);
+        if (choiceTipo.getItemCount() > 0) choiceTipo.select(0);
     }
 }

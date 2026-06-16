@@ -6,7 +6,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Button;
 
-// Ya no implementamos WindowListener, usamos un Adapter para evitar métodos vacíos.
 public class Controlador implements ActionListener {
     private Vista vista;
     private Modelo modelo;
@@ -30,17 +29,30 @@ public class Controlador implements ActionListener {
                 System.exit(0);
             }
         });
+
+        inicializarDesplegables();
     }
 
+    private void inicializarDesplegables() {
+        vista.cargarOpcionesEvento(modelo.obtenerListaEventos());
+        vista.cargarOpcionesTipo(modelo.obtenerListaTipos());
+    }
+
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         String botonPulsado = ((Button) e.getSource()).getLabel();
 
-        // El uso de 'switch' hace el código de control mucho más limpio que los if-else
         switch (botonPulsado) {
-            case "Ver Eventos":
-            case "Ver Eventos Disponibles":
+            case "Ver Eventos": 
+                // Si pulsa desde el menú principal, sí cambiamos de panel
                 vista.mostrarPanelEventos();
+                cargarYMostrarEventos();
+                break;
+                
+            case "Ver Eventos Disponibles":
+                // Si pulsa desde el formulario, NO cambiamos de panel.
+                // Solo cargamos los datos en el área de texto inferior.
                 cargarYMostrarEventos();
                 break;
                 
@@ -68,9 +80,19 @@ public class Controlador implements ActionListener {
         try {
             String nombre = vista.getNombre();
             String dniEmail = vista.getDni();
-            int idEvento = Integer.parseInt(vista.getEvento());
-            int idTipo = Integer.parseInt(vista.getTipo());
             int cantidad = Integer.parseInt(vista.getCantidad());
+
+            String textoEvento = vista.getEvento();
+            String textoTipo = vista.getTipo();
+            
+            if (textoEvento == null || textoTipo == null) {
+                vista.mostrarMensaje("Error: No hay eventos o tipos seleccionados.");
+                return;
+            }
+
+            // NUEVO: Extraer solo el número de ID usando split
+            int idEvento = Integer.parseInt(textoEvento.split(" - ")[0]);
+            int idTipo = Integer.parseInt(textoTipo.split(" - ")[0]);
 
             // 1. Extraemos los datos cruzados de la BD
             String[] datosTipo = modelo.obtenerDatosTipo(idTipo);
@@ -104,7 +126,7 @@ public class Controlador implements ActionListener {
             }
 
         } catch (NumberFormatException ex) {
-            vista.mostrarMensaje("Error: Por favor, introduce números válidos en ID Evento, Tipo y Cantidad.");
+            vista.mostrarMensaje("Error: Por favor, asegúrate de que la cantidad es un número válido.");
         } catch (Exception ex) {
             vista.mostrarMensaje("Error en la operación: " + ex.getMessage());
         }
