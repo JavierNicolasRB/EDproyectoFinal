@@ -7,12 +7,14 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+// Se encarga EXCLUSIVAMENTE de hablar con la base de datos
 public class Modelo {
-    // Credenciales de conexión a la base de datos
+    // Credenciales de conexión a MySQL
     private final String URL = "jdbc:mysql://localhost:3306/PracticaEntornos";
     private final String USER = "root";
     private final String PASSWORD = "1234"; 
 
+    // Establece la conexión
     public Connection obtenerConexion() {
         try {
             return DriverManager.getConnection(URL, USER, PASSWORD);
@@ -22,6 +24,7 @@ public class Modelo {
         }
     }
 
+    // Devuelve un texto formateado con todos los eventos para leerlo en pantalla
     public String obtenerEventosDisponibles() {
         StringBuilder resultado = new StringBuilder("--- EVENTOS DISPONIBLES ---\n");
         String sql = "SELECT * FROM eventos";
@@ -41,6 +44,7 @@ public class Modelo {
         }
     }
 
+    // Devuelve un texto formateado con los tipos de entrada para leerlo en pantalla
     public String obtenerTiposDisponibles() {
         StringBuilder resultado = new StringBuilder("--- TIPOS DE ENTRADA ---\n");
         String sql = "SELECT * FROM tipos";
@@ -61,7 +65,7 @@ public class Modelo {
         }
     }
 
-    // NUEVO: Devuelve una lista con el formato "ID - Nombre del Evento"
+    // Devuelve lista para rellenar el menú desplegable (Choice) de eventos
     public List<String> obtenerListaEventos() {
         List<String> lista = new ArrayList<>();
         String sql = "SELECT idEvento, nombreEvento FROM eventos";
@@ -79,7 +83,7 @@ public class Modelo {
         return lista;
     }
 
-    // NUEVO: Devuelve una lista con el formato "ID - Nombre del Tipo (Precio€)"
+    // Devuelve lista para rellenar el menú desplegable (Choice) de tipos de entrada
     public List<String> obtenerListaTipos() {
         List<String> lista = new ArrayList<>();
         String sql = "SELECT idTipo, nombreTipo, precioTipo FROM tipos";
@@ -97,7 +101,7 @@ public class Modelo {
         return lista;
     }
 
-    // Devuelve un array con [0]=precio, [1]=nombre, [2]=descripción del tipo de entrada
+    // Busca el precio, nombre y descripción de un tipo de entrada concreto
     public String[] obtenerDatosTipo(int idTipo) throws Exception {
         String sql = "SELECT precioTipo, nombreTipo, descripcionTipo FROM tipos WHERE idTipo = ?";
         
@@ -119,7 +123,7 @@ public class Modelo {
         }
     }
 
-    // Ejecuta la inserción de la venta en la base de datos
+    // Guarda la compra final en la tabla 'ventas'
     public void registrarVenta(String nombre, String dniEmail, int cantidad, double total, int idEvento, int idTipo) throws Exception {
         String sqlInsert = "INSERT INTO ventas (nombreClienteVenta, dniEmailClienteVenta, cantidadTicketsVenta, totalPagadoVenta, idEventoFK, idTipoFK) VALUES (?, ?, ?, ?, ?, ?)";
 

@@ -1,46 +1,51 @@
 package finalproyecto;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
 
+// Se encarga EXCLUSIVAMENTE de dibujar la interfaz (no tiene lógica ni eventos)
 public class Vista {
+    // Ventana principal
     Frame ventana = new Frame("Taquilla Plaza de Toros");
 
-    // Botones de navegación
+    // Botones de la aplicación
     Button btnVerEventosMenu = new Button("Ver Eventos");
     Button btnSacarTicketMenu = new Button("Sacar Ticket");
     Button btnVolverDeFormulario = new Button("Volver al Menú"); 
     Button btnVolverDeEventos = new Button("Volver al Menú"); 
-    
-    // Botones de acción
     Button btnVerEventosFormulario = new Button("Ver Eventos Disponibles");
     Button btnComprar = new Button("Comprar");
 
-    // Campos de entrada de datos modificados para usar Choice
+    // Componentes de la ventana emergente (Diálogo de confirmación)
+    Dialog dialogoConfirmacion;
+    TextArea txtResumen = new TextArea("", 8, 35, TextArea.SCROLLBARS_NONE);    
+    Button btnConfirmarDialogo = new Button("Confirmar");
+    Button btnCancelarDialogo = new Button("Cancelar");
+
+    // Cajas de texto y menús desplegables (Formulario)
     TextField txtNombre = new TextField(20);
     TextField txtDni = new TextField(20);
-    Choice choiceEvento = new Choice(); // NUEVO
-    Choice choiceTipo = new Choice();   // NUEVO
+    Choice choiceEvento = new Choice(); 
+    Choice choiceTipo = new Choice();   
     TextField txtCantidad = new TextField(5);
     
-    // Área de visualización de información
+    // Caja de texto inferior (consola de mensajes)
     TextArea areaTexto = new TextArea(10, 40);
 
-    // Contenedores principales
+    // Paneles (cajas invisibles para organizar la pantalla)
     Panel panelMenu = new Panel();
     Panel panelFormulario = new Panel();
     Panel panelEventos = new Panel();
 
+    // Al arrancar, construye todas las pantallas
     public Vista() {
         ventana.setLayout(new BorderLayout());
 
         configurarPanelMenu();
         configurarPanelFormulario();
         configurarPanelEventos();
+        configurarDialogo();
 
-        // Configuración inicial de la ventana
         areaTexto.setEditable(false);
         ventana.add(areaTexto, BorderLayout.SOUTH);
         mostrarPanelMenu();
@@ -51,6 +56,8 @@ public class Vista {
         ventana.setVisible(true);
     }
 
+    // --- MÉTODOS DE DISEÑO ---
+    
     private void configurarPanelMenu() {
         panelMenu.setLayout(new GridLayout(2, 1, 10, 10));
         panelMenu.add(btnVerEventosMenu);
@@ -62,8 +69,8 @@ public class Vista {
         Panel camposGrid = new Panel(new GridLayout(6, 2));
         camposGrid.add(new Label("Nombre Cliente:")); camposGrid.add(txtNombre);
         camposGrid.add(new Label("DNI / Email:")); camposGrid.add(txtDni);
-        camposGrid.add(new Label("Selecciona Evento:")); camposGrid.add(choiceEvento); // NUEVO
-        camposGrid.add(new Label("Selecciona Entrada:")); camposGrid.add(choiceTipo);  // NUEVO
+        camposGrid.add(new Label("Selecciona Evento:")); camposGrid.add(choiceEvento);
+        camposGrid.add(new Label("Selecciona Entrada:")); camposGrid.add(choiceTipo); 
         camposGrid.add(new Label("Cantidad:")); camposGrid.add(txtCantidad);
         camposGrid.add(btnVolverDeFormulario); 
         camposGrid.add(btnComprar); 
@@ -77,47 +84,22 @@ public class Vista {
         panelEventos.add(btnVolverDeEventos, BorderLayout.SOUTH);
     }
 
-    public boolean mostrarDialogoConfirmacion(String datosResumen) {
-        final Dialog dialogo = new Dialog(ventana, "Confirmar Compra", true);
-        dialogo.setLayout(new BorderLayout());
+    private void configurarDialogo() {
+        dialogoConfirmacion = new Dialog(ventana, "Confirmar Compra", true);
+        dialogoConfirmacion.setLayout(new BorderLayout());
         
-        TextArea txtResumen = new TextArea(datosResumen, 8, 35, TextArea.SCROLLBARS_NONE);
         txtResumen.setEditable(false);
-        dialogo.add(txtResumen, BorderLayout.CENTER);
+        dialogoConfirmacion.add(txtResumen, BorderLayout.CENTER);
         
         Panel panelBotones = new Panel();
-        Button btnConfirmar = new Button("Confirmar");
-        Button btnCancelar = new Button("Cancelar");
-        panelBotones.add(btnConfirmar);
-        panelBotones.add(btnCancelar);
-        dialogo.add(panelBotones, BorderLayout.SOUTH);
+        panelBotones.add(btnConfirmarDialogo);
+        panelBotones.add(btnCancelarDialogo);
+        dialogoConfirmacion.add(panelBotones, BorderLayout.SOUTH);
         
-        final boolean[] resultadoConfirmacion = {false};
-        
-        btnConfirmar.addActionListener(e -> {
-            resultadoConfirmacion[0] = true;
-            dialogo.dispose(); 
-        });
-        
-        btnCancelar.addActionListener(e -> {
-            resultadoConfirmacion[0] = false;
-            dialogo.dispose();
-        });
-        
-        dialogo.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                resultadoConfirmacion[0] = false;
-                dialogo.dispose();
-            }
-        });
-        
-        dialogo.setSize(380, 280);
-        dialogo.setLocationRelativeTo(ventana); 
-        dialogo.setVisible(true); 
-        
-        return resultadoConfirmacion[0];
+        dialogoConfirmacion.setSize(380, 280);
     }
+
+    // --- MÉTODOS PARA CAMBIAR QUÉ SE VE EN PANTALLA ---
 
     public void mostrarPanelMenu() {
         ventana.removeAll();
@@ -147,16 +129,26 @@ public class Vista {
         ventana.repaint();
     }
 
-    // --- GETTERS MODIFICADOS ---
+    // --- MÉTODOS PARA CONTROLAR LA VENTANA EMERGENTE ---
+    
+    public void abrirDialogo(String resumen) {
+        txtResumen.setText(resumen);
+        dialogoConfirmacion.setLocationRelativeTo(ventana);
+        dialogoConfirmacion.setVisible(true);
+    }
+
+    public void cerrarDialogo() {
+        dialogoConfirmacion.setVisible(false);
+    }
+
+    // --- MÉTODOS PARA LEER/ESCRIBIR DATOS EN LA INTERFAZ ---
 
     public String getNombre() { return txtNombre.getText(); }
     public String getDni() { return txtDni.getText(); }
-    public String getEvento() { return choiceEvento.getSelectedItem(); } // Saca el texto del choice
-    public String getTipo() { return choiceTipo.getSelectedItem(); }     // Saca el texto del choice
+    public String getEvento() { return choiceEvento.getSelectedItem(); } 
+    public String getTipo() { return choiceTipo.getSelectedItem(); }     
     public String getCantidad() { return txtCantidad.getText(); }
 
-    // --- MÉTODOS PARA RELLENAR LOS CHOICE ---
-    
     public void cargarOpcionesEvento(List<String> eventos) {
         choiceEvento.removeAll(); 
         for (String evento : eventos) {
@@ -179,7 +171,6 @@ public class Vista {
         txtNombre.setText("");
         txtDni.setText("");
         txtCantidad.setText("");
-        // Devolvemos los desplegables a la primera opción
         if (choiceEvento.getItemCount() > 0) choiceEvento.select(0);
         if (choiceTipo.getItemCount() > 0) choiceTipo.select(0);
     }
