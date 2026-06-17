@@ -6,7 +6,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Button;
 
-// Es el "Cerebro". Escucha a la Vista y da órdenes al Modelo.
+
 public class Controlador implements ActionListener {
     private Vista vista;
     private Modelo modelo;
